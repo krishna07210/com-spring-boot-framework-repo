@@ -50,22 +50,4 @@ public class LoginController {
 		return "welcome";
 	}
 
-	// ************************************************************
-
-	@RequestMapping(value = "/")
-	public String showDefaultPage(ModelMap model) {
-		model.put("name", "Hari");
-		model.put("password", "dummy");
-		return "welcome";
-	}
-
-	private String getLoggedinUserName() {
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-		if (principal instanceof UserDetails) {
-			return ((UserDetails) principal).getUsername();
-		}
-		return principal.toString();
-	}
-
 }
