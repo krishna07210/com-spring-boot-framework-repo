@@ -2,6 +2,7 @@ package com.springboot.web.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
 
+import com.springboot.web.jpa.repositories.TodoRepository;
 import com.springboot.web.model.Todo;
 import com.springboot.web.service.TodoService;
 
@@ -26,8 +28,11 @@ import com.springboot.web.service.TodoService;
 // @SessionAttributes("name")
 public class TodoController {
 
+	// @Autowired
+	// TodoService todoService;
+
 	@Autowired
-	TodoService todoService;
+	TodoRepository repository;
 
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
@@ -41,28 +46,30 @@ public class TodoController {
 		return "login";
 	}
 
-	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public String showWelcomePage(ModelMap model, @RequestParam String name, @RequestParam String password) {
-
-		boolean isValidUser = todoService.validateUser(name, password);
-		System.out.println("Is Valid : " + isValidUser);
-
-		if (!isValidUser) {
-			model.put("errorMessage", "Invalid Credentials");
-			return "welcome";
-		}
-
-		model.put("name", name);
-		model.put("password", password);
-
-		return "welcome";
-	}
+	// @RequestMapping(value = "/login", method = RequestMethod.POST)
+	// public String showWelcomePage(ModelMap model, @RequestParam String name,
+	// @RequestParam String password) {
+	//
+	// boolean isValidUser = todoService.validateUser(name, password);
+	// System.out.println("Is Valid : " + isValidUser);
+	//
+	// if (!isValidUser) {
+	// model.put("errorMessage", "Invalid Credentials");
+	// return "welcome";
+	// }
+	//
+	// model.put("name", name);
+	// model.put("password", password);
+	//
+	// return "welcome";
+	// }
 
 	@RequestMapping(value = "/list-todos", method = RequestMethod.GET)
 	public String showTodos(ModelMap model) {
 		String name = getLoggedInUserName();
 		// model.put("todos", todoService.retrieveTodos("Hari"));
-		model.put("todos", todoService.retrieveTodos(name));
+		// model.put("todos", todoService.retrieveTodos(name));
+		model.put("todos", repository.findByUser(name));
 		return "list-todos";
 	}
 
@@ -93,12 +100,12 @@ public class TodoController {
 
 	@RequestMapping(value = "/delete-todo", method = RequestMethod.GET)
 	public String deleteTodo(@RequestParam int id) {
+		// if (id == 1) {
+		// throw new RuntimeException("Something went Wrong");
+		// }
 
-		if (id == 1) {
-			throw new RuntimeException("Something went Wrong");
-		}
-
-		todoService.deleteTodo(id);
+		// todoService.deleteTodo(id);
+		repository.deleteById(id);
 		return "redirect:/list-todos";
 	}
 
@@ -107,14 +114,19 @@ public class TodoController {
 		if (result.hasErrors()) {
 			return "todo";
 		}
-		todoService.addTodo(getLoggedInUserName(), todo.getDesc(), new Date(), false);
+		// todoService.addTodo(getLoggedInUserName(), todo.getDesc(), new Date(),
+		// false);
+
+		todo.setUser(getLoggedInUserName());
+		repository.save(todo);
 		return "redirect:/list-todos";
 	}
 
 	@RequestMapping(value = "/update-todo", method = RequestMethod.GET)
 	public String showUpdateTodoPage(@RequestParam int id, ModelMap model) {
-		Todo todo = todoService.retrieveTodo(id);
-		model.put("todo", todo);
+		// Todo todo = todoService.retrieveTodo(id);
+		Optional<Todo> todo = repository.findById(id);
+		model.put("todo", todo.get());
 		return "todo";
 	}
 
@@ -125,7 +137,8 @@ public class TodoController {
 			return "todo";
 		}
 		todo.setUser(getLoggedInUserName());
-		todoService.updateTodo(todo);
+		// todoService.updateTodo(todo);
+		repository.save(todo);
 		return "redirect:/list-todos";
 	}
 }
